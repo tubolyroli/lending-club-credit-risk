@@ -1,0 +1,28 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Data — never commit raw or processed datasets
+data/raw/*
+data/processed/*
+!data/**/.gitkeep
+
+# Generated figures (commit only the curated ones in figures/final/)
+figures/exploratory/*
+!figures/exploratory/.gitkeep
+
+# Notebook checkpoints and OS junk
+.ipynb_checkpoints/
+.DS_Store
+
+# Models
+models/*.pkl
+models/*.joblib
+!models/.gitkeep
