@@ -98,12 +98,34 @@ st.markdown(
     .block-container {{ padding-top: 2rem; padding-bottom: 3rem; }}
     [data-testid="stHeader"] {{ background: transparent; }}
     .decision-card {{
+        position: relative;
+        overflow: hidden;
         border-radius: 14px;
         padding: 22px 24px;
         text-align: center;
         border: 1px solid rgba(148, 163, 184, 0.18);
         box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
         height: 100%;
+    }}
+    .decision-card::after {{
+        content: '';
+        position: absolute; inset: 0;
+        background: radial-gradient(circle at 50% 30%, rgba(255,255,255,0.16), transparent 60%);
+        pointer-events: none;
+        animation: card-flash 650ms ease-out both;
+    }}
+    @keyframes card-flash {{
+        0%   {{ opacity: 1; }}
+        100% {{ opacity: 0; }}
+    }}
+    @keyframes pop-in {{
+        0%   {{ opacity: 0; transform: translateY(4px) scale(0.96); }}
+        60%  {{ opacity: 1; }}
+        100% {{ opacity: 1; transform: translateY(0) scale(1); }}
+    }}
+    .decision-card .verdict,
+    [data-testid="stMetricValue"] {{
+        animation: pop-in 320ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
     }}
     .decision-card .label {{
         font-family: {UI_FONT};
