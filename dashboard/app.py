@@ -13,6 +13,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import shap
 import streamlit as st
+import streamlit.components.v1 as components
 
 from credit_risk import data as cr_data, models as cr_models
 
@@ -98,34 +99,12 @@ st.markdown(
     .block-container {{ padding-top: 2rem; padding-bottom: 3rem; }}
     [data-testid="stHeader"] {{ background: transparent; }}
     .decision-card {{
-        position: relative;
-        overflow: hidden;
         border-radius: 14px;
         padding: 22px 24px;
         text-align: center;
         border: 1px solid rgba(148, 163, 184, 0.18);
         box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
         height: 100%;
-    }}
-    .decision-card::after {{
-        content: '';
-        position: absolute; inset: 0;
-        background: radial-gradient(circle at 50% 30%, rgba(255,255,255,0.16), transparent 60%);
-        pointer-events: none;
-        animation: card-flash 650ms ease-out both;
-    }}
-    @keyframes card-flash {{
-        0%   {{ opacity: 1; }}
-        100% {{ opacity: 0; }}
-    }}
-    @keyframes pop-in {{
-        0%   {{ opacity: 0; transform: translateY(4px) scale(0.96); }}
-        60%  {{ opacity: 1; }}
-        100% {{ opacity: 1; transform: translateY(0) scale(1); }}
-    }}
-    .decision-card .verdict,
-    [data-testid="stMetricValue"] {{
-        animation: pop-in 320ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
     }}
     .decision-card .label {{
         font-family: {UI_FONT};
@@ -157,6 +136,68 @@ st.markdown(
     </style>
     """,
     unsafe_allow_html=True,
+)
+
+
+# Streamlit reuses the same DOM nodes across reruns, so CSS @keyframes never replay.
+# This script watches the parent doc for text changes on the verdict/metric/card nodes
+# and replays the animation via the Web Animations API.
+# Injected through components.html(height=0) because st.markdown strips <script> tags.
+components.html(
+    """
+    <script>
+    (function () {
+        const doc = window.parent.document;
+        if (doc.__lcAnimSetup) return;
+        doc.__lcAnimSetup = true;
+
+        const popIn = {
+            keyframes: [
+                { opacity: 0, transform: 'translateY(14px) scale(0.82)', offset: 0 },
+                { opacity: 1, transform: 'translateY(-2px) scale(1.06)', offset: 0.55 },
+                { opacity: 1, transform: 'translateY(0) scale(1)', offset: 1 }
+            ],
+            options: { duration: 520, easing: 'cubic-bezier(0.2, 0.7, 0.2, 1.2)' }
+        };
+        const cardFlash = {
+            keyframes: [
+                { filter: 'brightness(1)', boxShadow: '0 0 0 0 rgba(34,211,238,0.0), 0 6px 24px rgba(0,0,0,0.35)', offset: 0 },
+                { filter: 'brightness(1.75)', boxShadow: '0 0 0 6px rgba(34,211,238,0.45), 0 6px 24px rgba(0,0,0,0.35)', offset: 0.15 },
+                { filter: 'brightness(1)', boxShadow: '0 0 0 0 rgba(34,211,238,0.0), 0 6px 24px rgba(0,0,0,0.35)', offset: 1 }
+            ],
+            options: { duration: 700, easing: 'cubic-bezier(0.4, 0, 0.2, 1)' }
+        };
+
+        const lastText = new WeakMap();
+        const targets = [
+            { sel: '.decision-card .verdict', conf: popIn },
+            { sel: '[data-testid="stMetricValue"]', conf: popIn },
+            { sel: '.decision-card', conf: cardFlash },
+        ];
+
+        function scan() {
+            for (const { sel, conf } of targets) {
+                doc.querySelectorAll(sel).forEach(el => {
+                    const text = el.textContent;
+                    if (lastText.get(el) === text) return;
+                    lastText.set(el, text);
+                    el.animate(conf.keyframes, conf.options);
+                });
+            }
+        }
+
+        let timer = null;
+        const obs = new MutationObserver(() => {
+            clearTimeout(timer);
+            timer = setTimeout(scan, 40);
+        });
+        obs.observe(doc.body, { childList: true, subtree: true, characterData: true });
+
+        scan();
+    })();
+    </script>
+    """,
+    height=0,
 )
 
 
