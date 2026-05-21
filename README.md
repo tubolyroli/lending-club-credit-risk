@@ -16,9 +16,21 @@ A credit risk model on Lending Club data, framed as a **profit-optimization prob
 
 **Calibration matters.** Raw LightGBM under-predicts risk at the top end (predicts 30%, observes 40%). Isotonic regression on a held-out fold closes the gap; without it the expected-profit math falls apart and the model picks a worse operating point.
 
+![Reliability diagram](figures/final/reliability.png)
+
 **Fairness: one honest flag.** The lowest-income bracket (<$40k) is approved at 78% of the rate of $80–120k earners, just below the 80% disparate-impact threshold. The bracket's realized default rate is also higher (18.3% vs 12.6% among approved), so the gap is partly risk-explained, but it remains a real tension between risk-based underwriting and equitable access, surfaced rather than buried.
 
 **A real-world data trap.** Naïve test economics looked catastrophic (-$725/loan). Diagnosis: maturity censoring on 2016–2018 vintages, where only early prepayers and early defaulters had finalized by the dataset snapshot. Filtering to loans whose full term had elapsed flipped the baseline to +$530/loan and made the rest of the analysis meaningful.
+
+## Explainability
+
+Global SHAP attributions across the test set: interest rate, DTI, and FICO dominate as expected; subgrade and term carry meaningful weight after that.
+
+![SHAP summary](figures/final/shap_summary.png)
+
+Per-loan explanation for a notable error: a loan the calibrated model approved that ended up defaulting. The decomposition shows which features pulled the predicted PD below threshold.
+
+![SHAP waterfall for a false negative](figures/final/shap_waterfall_fn.png)
 
 ## Notebooks
 
@@ -75,7 +87,7 @@ Random splits leak future information into training and inflate metrics, a class
 ├── credit_risk/          # Reusable Python: data, features, models, economics, fairness
 ├── dashboard/app.py      # Streamlit decision support
 ├── figures/final/        # Curated charts referenced in the README
-└── models/               # Trained LightGBM + isotonic calibrators (gitignored)
+└── models/               # lightgbm.txt booster (tracked); .joblib calibrators (gitignored)
 ```
 
 ## Setup
