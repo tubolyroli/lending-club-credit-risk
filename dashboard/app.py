@@ -548,20 +548,26 @@ with tab_explain:
         f"E[f(x)] to this loan's prediction f(x). Red increases risk, blue reduces it."
     )
 
-    with plt.style.context("dark_background"):
-        fig = plt.figure(figsize=(9, 5.5), facecolor=PANEL_BG)
-        shap.plots.waterfall(explanation[0], max_display=10, show=False)
-        ax = plt.gca()
-        ax.set_facecolor(PANEL_BG)
-        fig.patch.set_facecolor(PANEL_BG)
-        for spine in ax.spines.values():
-            spine.set_color("#334155")
-        ax.tick_params(colors="#cbd5e1")
-        for txt in ax.texts:
-            if txt.get_color() in ("black", "#000000", (0, 0, 0, 1)):
-                txt.set_color("#e2e8f0")
-        plt.tight_layout()
-        st.pyplot(fig, clear_figure=True)
+    # Let shap.plots.waterfall manage its own figure (it calls plt.gcf() and
+    # resizes internally). Pre-creating one here used to confuse its tick-label
+    # bookkeeping for edge-case SHAP distributions and raised IndexError.
+    try:
+        with plt.style.context("dark_background"):
+            shap.plots.waterfall(explanation[0], max_display=10, show=False)
+            fig = plt.gcf()
+            fig.patch.set_facecolor(PANEL_BG)
+            for ax in fig.axes:
+                ax.set_facecolor(PANEL_BG)
+                for spine in ax.spines.values():
+                    spine.set_color("#334155")
+                ax.tick_params(colors="#cbd5e1")
+            st.pyplot(fig, clear_figure=True)
+    except IndexError:
+        plt.close("all")
+        st.info(
+            "Couldn't render the SHAP waterfall for this exact input combination "
+            "(known shap+matplotlib edge case). The top drivers above are still correct."
+        )
 
 
 with tab_method:
@@ -574,9 +580,16 @@ with tab_method:
 - **Threshold.** Approval cutoff of {OPTIMAL_THRESHOLD:.1%} chosen by maximizing realized profit on the 2016 test set,
   *not* by minimizing log-loss or maximizing AUC. Calibration matters because the expected-profit math needs
   honest probabilities.
-- **Test-set lift.** +10.9% realized profit over the FICO≥660 approve-all baseline (+$6.3M on $57.9M).
+- **Test-set lift.** +10.9% realized profit over the FICO≥660 approve-all baseline (+\$6.3M on \$57.9M).
 - **Why this beats classification metrics.** A model that wins on AUC can lose on profit if its score
   distribution is wrong in the high-stakes tail. Profit curves at varying approval rates make the comparison directly.
+
+##### Why values sometimes look "stuck" across slider changes
+
+The calibrator is an **isotonic regression**, which is a step function. Small movements in the raw
+LightGBM probability fall onto the same plateau and get mapped to an identical calibrated PD, so the
+displayed PD and profit don't move even though the underlying score did. This is real model behavior,
+not a UI bug. The SHAP waterfall (raw-score space) reflects the actual feature contributions in those cases.
 
 ##### Why these numbers, not others
 
