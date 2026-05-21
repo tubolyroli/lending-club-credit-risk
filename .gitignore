@@ -26,3 +26,6 @@ figures/exploratory/*
 models/*.pkl
 models/*.joblib
 !models/.gitkeep
+
+# Local-only agent guidance
+CLAUDE.md
