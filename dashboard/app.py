@@ -68,39 +68,70 @@ st.set_page_config(
 )
 
 
+UI_FONT = '"Inter Tight", system-ui, -apple-system, "Segoe UI", sans-serif'
+SERIF_FONT = '"Source Serif 4", "Source Serif Pro", Georgia, serif'
+MONO_FONT = '"JetBrains Mono", "SF Mono", Menlo, Consolas, monospace'
+
+
 # ---- Global CSS polish ----
 st.markdown(
-    """
+    f"""
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700;8..60,800&display=swap" rel="stylesheet">
     <style>
-    .block-container { padding-top: 2rem; padding-bottom: 3rem; }
-    [data-testid="stHeader"] { background: transparent; }
-    .decision-card {
+    html, body, .stApp, [data-testid="stAppViewContainer"], [data-testid="stSidebar"] {{
+        font-family: {UI_FONT};
+        font-feature-settings: "ss01", "ss02", "cv11";
+    }}
+    h1, h2, h3, .stMarkdown h1, .stMarkdown h2, .stMarkdown h3 {{
+        font-family: {SERIF_FONT};
+        font-weight: 700;
+        letter-spacing: -0.01em;
+    }}
+    h1 {{ letter-spacing: -0.02em; }}
+    code, pre, kbd, samp, tt, .stCode, [data-testid="stMetricValue"] {{
+        font-family: {MONO_FONT};
+        font-variant-numeric: tabular-nums;
+    }}
+    .stNumberInput input, .stTextInput input {{ font-family: {MONO_FONT}; }}
+    .block-container {{ padding-top: 2rem; padding-bottom: 3rem; }}
+    [data-testid="stHeader"] {{ background: transparent; }}
+    .decision-card {{
         border-radius: 14px;
         padding: 22px 24px;
         text-align: center;
         border: 1px solid rgba(148, 163, 184, 0.18);
         box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
         height: 100%;
-    }
-    .decision-card .label {
+    }}
+    .decision-card .label {{
+        font-family: {UI_FONT};
         font-size: 12px; color: #94a3b8;
         letter-spacing: 0.14em; text-transform: uppercase;
         margin-bottom: 6px;
-    }
-    .decision-card .verdict {
-        font-size: 34px; font-weight: 800; line-height: 1.1;
+    }}
+    .decision-card .verdict {{
+        font-family: {SERIF_FONT};
+        font-size: 36px; font-weight: 700; line-height: 1.1;
+        letter-spacing: -0.01em;
         margin: 2px 0 6px 0;
-    }
-    .decision-card .sub { font-size: 13px; color: #cbd5e1; }
-    .driver-row {
+    }}
+    .decision-card .verdict.numeric {{
+        font-family: {MONO_FONT};
+        font-variant-numeric: tabular-nums;
+        font-weight: 700;
+    }}
+    .decision-card .sub {{ font-size: 13px; color: #cbd5e1; }}
+    .driver-row {{
         display: flex; justify-content: space-between; align-items: center;
         padding: 10px 14px; margin: 6px 0;
         background: rgba(148, 163, 184, 0.07);
         border-radius: 10px;
         border-left: 4px solid var(--accent, #94a3b8);
-    }
-    .driver-row .name { font-weight: 600; color: #e2e8f0; }
-    .driver-row .meta { font-size: 12px; color: #94a3b8; }
+    }}
+    .driver-row .name {{ font-weight: 600; color: #e2e8f0; }}
+    .driver-row .meta {{ font-size: 12px; color: #94a3b8; font-family: {MONO_FONT}; }}
     </style>
     """,
     unsafe_allow_html=True,
@@ -247,13 +278,13 @@ def make_gauge(pd_pct: float, threshold_pct: float) -> go.Figure:
     fig = go.Figure(go.Indicator(
         mode="gauge+number",
         value=pd_pct,
-        number={"suffix": "%", "font": {"size": 38, "color": "#e2e8f0", "family": "sans-serif"}},
+        number={"suffix": "%", "font": {"size": 38, "color": "#e2e8f0", "family": "JetBrains Mono, monospace"}},
         gauge={
             "axis": {
                 "range": [0, 50],
                 "tickwidth": 1,
                 "tickcolor": "#475569",
-                "tickfont": {"color": "#94a3b8", "size": 11},
+                "tickfont": {"color": "#94a3b8", "size": 11, "family": "Inter Tight, sans-serif"},
             },
             "bar": {"color": bar_color, "thickness": 0.28},
             "bgcolor": "rgba(0,0,0,0)",
@@ -315,7 +346,7 @@ with hero_right:
         f"""
         <div class="decision-card" style="background: linear-gradient(135deg, rgba(34,211,238,0.12), rgba(34,211,238,0.02));">
             <div class="label">Expected profit (per loan)</div>
-            <div class="verdict" style="color: {profit_color};">${expected_profit:,.0f}</div>
+            <div class="verdict numeric" style="color: {profit_color};">${expected_profit:,.0f}</div>
             <div class="sub">
                 +${weighted_interest:,.0f} interest weighted by (1&minus;PD)
                 &nbsp;&minus;&nbsp;
@@ -345,7 +376,7 @@ def make_profit_breakdown(weighted_interest: float, weighted_loss: float, net: f
         marker_color=[GOOD, BAD, ACCENT if net >= 0 else BAD],
         text=[f"+${weighted_interest:,.0f}", f"−${weighted_loss:,.0f}", f"${net:,.0f}"],
         textposition="outside",
-        textfont={"color": "#e2e8f0", "size": 13},
+        textfont={"color": "#e2e8f0", "size": 13, "family": "JetBrains Mono, monospace"},
         hoverinfo="skip",
         width=0.55,
     ))
@@ -361,7 +392,7 @@ def make_profit_breakdown(weighted_interest: float, weighted_loss: float, net: f
             zeroline=True, zerolinecolor="#475569", zerolinewidth=1,
             showgrid=False, showticklabels=False,
         ),
-        yaxis=dict(showgrid=False, tickfont={"color": "#cbd5e1", "size": 12}),
+        yaxis=dict(showgrid=False, tickfont={"color": "#cbd5e1", "size": 12, "family": "Inter Tight, sans-serif"}),
     )
     return fig
 
